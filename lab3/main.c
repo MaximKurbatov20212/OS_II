@@ -16,9 +16,6 @@ void* print_msg(void* arg) {
     pthread_exit(NULL);
 }
 
-int create_new_thread(pthread_t thread, char* arg[]) {
-}
-
 int main(int argc, char* argv[]) {
     pthread_t threads[4];
 
