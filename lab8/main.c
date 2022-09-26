@@ -7,8 +7,8 @@
 
 #define PTHREAD_CREATE_ERROR 0
 #define PTHREAD_JOIN_SUCCESS 0
+#define STEPS 200000000
 
-#define STEPS 2000000000
 
 struct Order {
     int left;
@@ -34,15 +34,30 @@ void* get_pi(void* args) {
 void get_order(struct Order* order, const int i, const int threads_count) {
     int step = STEPS / threads_count;
     step += (i < STEPS % threads_count);
-
-    order->left = i == 0 ? 0 : step * i + 1;
-    order->right = i == 0 ? step : step * (i + 1);
+    int count = STEPS % threads_count; // количество потоков, у которых больше интераций, чем у остальныx
+        
+    if (i < count) { // если наш поток получил больше итераций
+        order->left = step * i;
+        order->right = step * (i + 1) - 1;
+        return;
+    }
+    order->left = ((step + 1) * count) + (step * (i - count));
+    order->right = order->left + step - 1;
 //    printf("i = %i left = %i right = %i\n", i, order->left, order->right);
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 1) return ERROR;
+    if (argc != 2) {
+        printf("Invalid number of args. Usage: ./*.exe <number of threads>") ;
+        return ERROR;
+    }
+
     int threads_count = atoi(argv[1]);
+    if (threads_count == 0) {
+        printf("atoi error") ;
+        return ERROR;
+    }
+
     pthread_t threads[threads_count];
     struct Order order[threads_count];
 
