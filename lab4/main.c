@@ -29,9 +29,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    struct timespec tv;
-    tv.tv_sec = DELAY;
-    tv.tv_nsec = 0;
+    struct timespec tv = {DELAY, 0};
 
     int sleep_res = nanosleep(&tv, NULL);
     if (sleep_res == SLEEP_ERROR) {
