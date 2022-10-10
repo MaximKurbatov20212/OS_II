@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 
 #define PTHREAD_CREATE_SUCCESS 0
+#define PTHREAD_JOIN_SUCCESS 0
 #define ERROR 1
 #define SUCCESS 0 
 #define DELAY 2
@@ -10,7 +12,7 @@
 #define CANCEL_SUCCESS 0
 #define TRUE 1
 
-void* print_smth() {
+void* print_smth(void* args) {
     while (TRUE) {
         printf("New thread\n");
     }
@@ -26,9 +28,14 @@ int main(int argc, char* argv[]) {
         return create_result;
     }
 
-    int sleep_res = sleep(DELAY);
+
+    struct timespec tv;
+    tv.tv_sec = DELAY;
+    tv.tv_nsec = 0;
+
+    int sleep_res = nanosleep(&tv, NULL);
     if (sleep_res == SLEEP_ERROR) {
-        printf("sleep error\n");
+        perror("nanosleep");
         return SLEEP_ERROR;
     }
 
@@ -38,5 +45,12 @@ int main(int argc, char* argv[]) {
         return ERROR;
     }
 
+    int join_result = pthread_join(thread, NULL);
+    if (join_result != PTHREAD_JOIN_SUCCESS) {
+        printf("pthread_join error\n");
+        return ERROR;
+    }
+
     return SUCCESS;
 }
+

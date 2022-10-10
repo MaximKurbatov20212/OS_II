@@ -8,6 +8,7 @@
 #define SUCCESS 0
 #define ERROR 1 
 #define PTHREAD_CREATE_ERROR 0 
+#define PTHREAD_JOIN_SUCCESS 0 
 
 struct msg {
     char** string;
@@ -46,7 +47,6 @@ struct msg* generate_strings() {
     return msgs;
 }
 
-
 void* print_msg(void* arg) {
     struct msg* args = (struct msg*) arg;
 
@@ -69,6 +69,23 @@ int main(int argc, char* argv[]) {
             return ERROR;
         }
     }
+
+    for (int i = 0; i < NUM_OF_THREADS; ++i) {
+        int join_result = pthread_join(threads[i], NULL);
+
+        if (join_result != PTHREAD_JOIN_SUCCESS) {
+            printf("pthread_join error\n");
+            return ERROR;
+        }
+    }
+    
+    for (int i = 0; i < NUM_OF_THREADS; ++i) {
+        for (int j = 0; j < msgs[i].num; ++j) {
+            free(msgs[i].string[j]);
+        }
+        free(msgs[i].string);
+    }
+    free(msgs);
 
     pthread_exit(NULL);
 }

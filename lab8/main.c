@@ -7,40 +7,39 @@
 
 #define PTHREAD_CREATE_ERROR 0
 #define PTHREAD_JOIN_SUCCESS 0
-#define STEPS 200000000
-
+const long long STEPS = 1000000000;
 
 struct Order {
-    int left;
-    int right;
+    long long left;
+    long long right;
+};
+
+struct Info {
+    double chunk_sum;
+    struct Order order;
 };
 
 void* get_pi(void* args) {
-    struct Order* order = (struct Order*) args;
-    double* pi = (double *) calloc(1, sizeof(double));
-    if (pi == NULL) {
-        perror("calloc");
-        return NULL;
-    }
+    struct Info* info = (struct Info*) args;
 
-    for (int i = order->left; i <= order->right; ++i) {
-        (*pi) += 1.0 / (i * 4.0 + 1.0);
-        (*pi) -= 1.0 / (i * 4.0 + 3.0);
+    for (long long i = info->order.left; i <= info->order.right; ++i) {
+        (info->chunk_sum) += 1.0 / (i * 4.0 + 1.0);
+        (info->chunk_sum) -= 1.0 / (i * 4.0 + 3.0);
     }
-
-    pthread_exit((void *) pi);
 }
 
 void get_order(struct Order* order, const int i, const int threads_count) {
-    int step = STEPS / threads_count;
-    step += (i < STEPS % threads_count);
-    int count = STEPS % threads_count; // количество потоков, у которых больше интераций, чем у остальныx
+    long long step = STEPS / threads_count;   // 
+    step += (i < STEPS % threads_count); // количество итераций у потока
+    long long count = STEPS % threads_count; // количество потоков, у которых больше интераций, чем у остальныx
         
     if (i < count) { // если наш поток получил больше итераций
         order->left = step * i;
         order->right = step * (i + 1) - 1;
+//        printf("i = %i left = %i right = %i\n", i, order->left, order->right);
         return;
     }
+
     order->left = ((step + 1) * count) + (step * (i - count));
     order->right = order->left + step - 1;
 //    printf("i = %i left = %i right = %i\n", i, order->left, order->right);
@@ -59,14 +58,14 @@ int main(int argc, char* argv[]) {
     }
 
     pthread_t threads[threads_count];
-    struct Order order[threads_count];
-
-    void* sum[threads_count];
+    struct Info* info = (struct Info*) malloc(threads_count * sizeof(struct Info));
     double result = 0;
 
     for (int i = 0; i < threads_count; ++i) {
-        get_order(&order[i], i, threads_count);
-        int create_result = pthread_create(&threads[i], NULL, get_pi, &order[i]);
+        get_order(&(info[i].order), i, threads_count);
+        info[i].chunk_sum = 0;
+
+        int create_result = pthread_create(&threads[i], NULL, get_pi, &info[i]);
 
         if (create_result != PTHREAD_CREATE_ERROR) {
            printf("pthread_create error: couldn't create thread\n");
@@ -75,19 +74,18 @@ int main(int argc, char* argv[]) {
     }
 
     for (int i = 0; i < threads_count; ++i) {
-        int join_result = pthread_join(threads[i], sum + i);
+        int join_result = pthread_join(threads[i], NULL);
 
         if (join_result != PTHREAD_JOIN_SUCCESS) {
             printf("pthread_join error\n");
             return ERROR;
         }
 
-        result += *((double *) (sum[i]));
-        free(sum[i]);
+        result += info[i].chunk_sum;
     }
 
     result *= 4;
     printf("%f", result);
-
+    free(info);
     return SUCCESS;
 }
