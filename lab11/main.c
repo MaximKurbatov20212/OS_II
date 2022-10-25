@@ -36,11 +36,12 @@ void* child_print(void* args) {
     lock_mutex(&mutexes[current_mutex]);
 
     for (int i = 0; i < 3 * N; i++) {
-        lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
-        if (current_mutex == 0) {
+        if (current_mutex  == 0) {
             printf("CHILD\n");
         }
+        lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
         unlock_mutex(&mutexes[current_mutex]);
+
         current_mutex = (current_mutex + 1) % NUM_OF_MUT;
     }
     unlock_mutex(&mutexes[current_mutex]);
