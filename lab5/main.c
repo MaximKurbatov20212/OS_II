@@ -23,7 +23,7 @@ void* print_smth() {
         printf("New thread\n");
     }
 
-//        pthread_cleanup_pop(NO_ARGS);
+    pthread_cleanup_pop(NO_ARGS);
 }
 
 int main(int argc, char* argv[]) {

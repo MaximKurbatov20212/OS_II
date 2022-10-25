@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <string.h>
 
-#define STEPS_NUMBER 200000000
+#define STEPS_NUMBER 2000000000
 #define SUCCESS 0
 #define ERROR -1
 #define COMMAND_ARGUMENT_NUMBER 2
@@ -23,12 +23,19 @@ void* calculatePartPI(void* args){
     Limit* limitsSerial = (Limit*) args;
     int start = limitsSerial->start;
     int end = limitsSerial->end;
+
+    struct timespec start_, end_;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start_);
     
     double localPI = 0;
     for (int i = start; i < end ; i++) {
         localPI += 1.0 / (i*4.0 + 1.0);
         localPI -= 1.0 / (i*4.0 + 3.0);
     }
+
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end_);
+
+    printf("Time taken: %lf sec.\n", end_.tv_sec-start_.tv_sec + 0.000000001*(end_.tv_nsec-start_.tv_nsec));
 
     double* resultedLocalPI = (double*) malloc(sizeof(double));
     if (resultedLocalPI == NULL){
@@ -99,3 +106,4 @@ int main(int argc, char** argv) {
     printf("pi done - %.15g \n", pi);
     return SUCCESS;
 }
+

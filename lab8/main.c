@@ -22,9 +22,25 @@ struct Info {
 void* get_pi(void* args) {
     struct Info* info = (struct Info*) args;
 
-    for (long long i = info->order.left; i <= info->order.right; ++i) {
-        (info->chunk_sum) += 1.0 / (i * 4.0 + 1.0);
-        (info->chunk_sum) -= 1.0 / (i * 4.0 + 3.0);
+    long long s = info->order.left;
+    long long e = info->order.right;
+    double chunk = 0;
+
+    for (long long i = s; i <= e; i++) {
+        chunk += 1.0 / (i * 4.0 + 1.0);
+        chunk -= 1.0 / (i * 4.0 + 3.0);
+    }
+    info->chunk_sum = chunk;
+}
+
+void* get_pi(void* args) {
+    struct Info* info = (struct Info*) args;
+
+    double chunk = 0;
+
+    for (long long i = info->order.left; i <= info->order.right; i++) {
+        info->chunk_sum += 1.0 / (i * 4.0 + 1.0);
+        info->chunk_sum -= 1.0 / (i * 4.0 + 3.0);
     }
 }
 
@@ -61,7 +77,7 @@ int main(int argc, char* argv[]) {
     struct Info* info = (struct Info*) malloc(threads_count * sizeof(struct Info));
     double result = 0;
 
-    for (int i = 0; i < threads_count; ++i) {
+    for (int i = 0; i < threads_count; i++) {
         get_order(&(info[i].order), i, threads_count);
         info[i].chunk_sum = 0;
 
@@ -85,7 +101,7 @@ int main(int argc, char* argv[]) {
     }
 
     result *= 4;
-    printf("%f", result);
+    printf("%f\n", result);
     free(info);
     return SUCCESS;
 }

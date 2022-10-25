@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <pthread.h>
+
+#define SUCCESS 0
+#define ERROR 1
+#define PTHREAD_CREATE_ERROR 0
+#define N 10
+#define PTHREAD_JOIN_SUCCESS 0
+
+pthread_mutex_t mutex;
+
+void* print_msg() {
+    struct timespec ts = {0, 100000};
+    for (int i = 0; i < N; i++) {
+        pthread_mutex_lock(&mutex);
+        printf("New thread\n");
+        pthread_mutex_unlock(&mutex);
+        nanosleep(&ts, NULL);
+    }
+
+    pthread_exit(NULL);
+}
+
+int main() {
+    pthread_t new_thread;
+
+    pthread_mutex_init(&mutex, NULL);
+
+    int create_result = pthread_create(&new_thread, NULL, print_msg, NULL);
+
+    if (create_result != PTHREAD_CREATE_ERROR) {
+        printf("pthread_create error: couldn't create thread\n");
+        return ERROR;
+    }
+
+    struct timespec ts = {0, 100000};
+    for (int i = 0; i < N; i++) {
+        pthread_mutex_lock(&mutex);
+        printf("Main thread\n");
+        pthread_mutex_unlock(&mutex);
+        nanosleep(&ts, NULL);
+    }
+
+    int join_result = pthread_join(new_thread, NULL);
+    if (join_result != PTHREAD_JOIN_SUCCESS) {
+        fprintf(stderr, "join error");
+        return join_result;
+    }
+
+    pthread_mutex_destroy(&mutex);
+
+    return SUCCESS;
+}
+
