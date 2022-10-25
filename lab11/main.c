@@ -32,34 +32,35 @@ int unlock_mutex(pthread_mutex_t* mutex) {
 void* child_print(void* args) {
     pthread_mutex_t* mutexes = (pthread_mutex_t*) args;
 
-    lock_mutex(&mutexes[1]);
-    for (int i = 0; i < N; i++) {
-        if (lock_mutex(&mutexes[0]) == ERROR) pthread_exit(NULL);
-        if (printf("CHILD\n") == ERROR) pthread_exit(NULL);
-        if (unlock_mutex(&mutexes[1]) == ERROR) pthread_exit(NULL);
+    int current_mutex = 1;
+    lock_mutex(&mutexes[current_mutex]);
 
-
-        if (lock_mutex(&mutexes[2]) == ERROR) pthread_exit(NULL);
-        if (unlock_mutex(&mutexes[0]) == ERROR) pthread_exit(NULL);
-        if (lock_mutex(&mutexes[1]) == ERROR)  pthread_exit(NULL);
-        if (unlock_mutex(&mutexes[2]) == ERROR) pthread_exit(NULL);
+    for (int i = 0; i < 3 * N; i++) {
+        lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
+        if (current_mutex == 0) {
+            printf("CHILD\n");
+        }
+        unlock_mutex(&mutexes[current_mutex]);
+        current_mutex = (current_mutex + 1) % NUM_OF_MUT;
     }
-    if (unlock_mutex(&mutexes[1]) == ERROR) pthread_exit(NULL);
+    unlock_mutex(&mutexes[current_mutex]);
     pthread_exit(args);
 }
 
 // 0 -> 2 -> 1 -> 0
 int parent_print(pthread_mutex_t* mutexes) {
-    for (int i = 0; i < N; i++) {
-        printf("MAIN\n");
-        if (lock_mutex(&mutexes[2]) == ERROR) return ERROR;
-        if (unlock_mutex(&mutexes[0]) == ERROR) return ERROR;
-        if (lock_mutex(&mutexes[1]) == ERROR) return ERROR;
-        if (unlock_mutex(&mutexes[2]) == ERROR) return ERROR;
-        if (lock_mutex(&mutexes[0]) == ERROR) return ERROR;
-        if (unlock_mutex(&mutexes[1]) == ERROR) return ERROR;
+    int current_mutex = 0;
+
+    for (int i = 0; i < 3 * N; i++) {
+        if (current_mutex == 0) {
+            printf("MAIN\n");
+        }
+        lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
+        unlock_mutex(&mutexes[current_mutex]);
+
+        current_mutex = (current_mutex + 1) % NUM_OF_MUT;
     }
-    if (unlock_mutex(&mutexes[0]) == ERROR) return ERROR;
+    unlock_mutex(&mutexes[current_mutex]);
     return SUCCESS;
 }
 
@@ -123,7 +124,7 @@ int main() {
         return ERROR;
     }
     
-    struct timespec ts = {1, 0};
+    struct timespec ts = {2, 0};
     nanosleep(&ts, NULL);
 
     int print_res = parent_print(mutexes);
