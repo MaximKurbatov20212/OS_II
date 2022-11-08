@@ -28,39 +28,31 @@ int unlock_mutex(pthread_mutex_t* mutex) {
     return SUCCESS;
 }
 
-// 1 -> 0 -> 2 -> 1
 void* child_print(void* args) {
     pthread_mutex_t* mutexes = (pthread_mutex_t*) args;
 
     int current_mutex = 1;
     lock_mutex(&mutexes[current_mutex]);
-
-    for (int i = 0; i < 3 * N; i++) {
-        if (current_mutex  == 0) {
-            printf("CHILD\n");
-        }
+    for (int i = 0; i < N; i++) {
         lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
+        printf("CHILD\n");
         unlock_mutex(&mutexes[current_mutex]);
-
         current_mutex = (current_mutex + 1) % NUM_OF_MUT;
     }
+
     unlock_mutex(&mutexes[current_mutex]);
     pthread_exit(args);
 }
 
-// 0 -> 2 -> 1 -> 0
 int parent_print(pthread_mutex_t* mutexes) {
     int current_mutex = 0;
-
-    for (int i = 0; i < 3 * N; i++) {
-        if (current_mutex == 0) {
-            printf("MAIN\n");
-        }
+    for (int i = 0; i < N; i++) {
         lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
+        printf("PARENT\n");
         unlock_mutex(&mutexes[current_mutex]);
-
         current_mutex = (current_mutex + 1) % NUM_OF_MUT;
     }
+
     unlock_mutex(&mutexes[current_mutex]);
     return SUCCESS;
 }
