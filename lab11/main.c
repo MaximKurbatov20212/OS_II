@@ -31,7 +31,7 @@ int unlock_mutex(pthread_mutex_t* mutex) {
 void* child_print(void* args) {
     pthread_mutex_t* mutexes = (pthread_mutex_t*) args;
 
-    int current_mutex = 1;
+    int current_mutex = 2;
     lock_mutex(&mutexes[current_mutex]);
     for (int i = 0; i < N; i++) {
         lock_mutex(&mutexes[(current_mutex + 1) % NUM_OF_MUT]);
@@ -107,6 +107,7 @@ int main() {
 
     lock_mutex(&mutexes[0]);
 
+
     int create_result = pthread_create(&new_thread, 
                                         NULL, 
                                         child_print, 
@@ -116,11 +117,13 @@ int main() {
         printf("pthread_create error: couldn't create thread\n");
         return ERROR;
     }
+
     
-    struct timespec ts = {2, 0};
+    struct timespec ts = {1, 0};
     nanosleep(&ts, NULL);
 
     int print_res = parent_print(mutexes);
+
     if (print_res == ERROR) {
         return ERROR;
     }
